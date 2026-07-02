@@ -1,0 +1,4 @@
+# Cấu hình đường dẫn cho ứng dụng đọc truyện TTS
+path_models: ./piper1-gpl/models/vais1000/medium/vi_VN-vais1000-medium.onnx
+# path_models: ./piper1-gpl/models/vivos/medium/vi_VN-vivos-medium.onnx
+books_dir: /root/Project/TruyenTTS/Books
