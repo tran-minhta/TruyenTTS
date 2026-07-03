@@ -15,7 +15,7 @@ pdfminer.six==20260107
 pdfplumber==0.11.10
 pexpect==4.9.0
 pillow==12.3.0
--e git+ssh://git@github.com/tran-minhta/piper1-gpl.git@bb87eeb96ef79f1a49950f7996709e1ec3be52d8#egg=piper_tts
+git+ssh://git@github.com/tran-minhta/piper1-gpl.git@bb87eeb96ef79f1a49950f7996709e1ec3be52d8#egg=piper_tts
 protobuf==7.35.1
 ptyprocess==0.7.0
 pycparser==3.0
