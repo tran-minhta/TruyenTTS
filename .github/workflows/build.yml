@@ -1,0 +1,92 @@
+name: Build Python Multi-Platform (APK, EXE, Linux)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # 1. BUILD WINDOWS (EXE) bằng PyInstaller
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build EXE
+        run: |
+          pyinstaller --onedir --name=TruyenTTS tts_engine.py  # Thay tts_engine.py bằng file chạy chính của bạn nếu cần
+
+      - name: Upload Windows EXE Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/TruyenTTS/
+
+  # 2. BUILD LINUX bằng PyInstaller
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Linux Binary
+        run: |
+          pyinstaller --onedir --name=TruyenTTS tts_engine.py
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-app
+          path: dist/TruyenTTS/
+
+  # 3. BUILD ANDROID (APK) bằng Buildozer
+  build-android:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get Buildozer Docker Image
+        # Sử dụng Docker buildozer để tránh cài đặt môi trường Android SDK/NDK phức tạp trên Ubuntu ảo
+        run: |
+          pip3 install --user --upgrade buildozer
+          # Lưu ý: Bạn cần có file `buildozer.spec` ở thư mục gốc để cấu hình ứng dụng Android (tên, package, icon...)
+          # Nếu chưa có buildozer.spec, job này sẽ cần chạy `buildozer init` trước ở máy local để cấu hình.
+
+      - name: Build với Buildozer (Sử dụng Action có sẵn để tiện lợi)
+        uses: ArtemGovorov/buildozer-action@v1
+        with:
+          command: buildozer android release
+          repository_root: .
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: .buildozer/android/platform/build-armeabi-v7a_arm64-v8a/dists/truyentts/bin/*.apk

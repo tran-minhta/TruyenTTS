@@ -1,7 +1,9 @@
 beautifulsoup4==4.15.0
+buildozer==1.6.0
 cffi==2.0.0
 charset-normalizer==3.4.7
 cryptography==49.0.0
+Cython==0.29.37
 EbookLib==0.20
 flatbuffers==25.12.19
 lxml==6.1.1
@@ -11,9 +13,11 @@ packaging==26.2
 pathvalidate==3.3.1
 pdfminer.six==20260107
 pdfplumber==0.11.10
+pexpect==4.9.0
 pillow==12.3.0
 -e git+ssh://git@github.com/tran-minhta/piper1-gpl.git@bb87eeb96ef79f1a49950f7996709e1ec3be52d8#egg=piper_tts
 protobuf==7.35.1
+ptyprocess==0.7.0
 pycparser==3.0
 pypdfium2==5.11.0
 PyQt6==6.11.0
