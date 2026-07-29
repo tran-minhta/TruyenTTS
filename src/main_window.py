@@ -24,33 +24,33 @@ from src.reader.bookmark_manager import (
 
 
 APP_CSS = """
-QMainWindow { background-color: #1A1A2E; }
+QMainWindow { background-color: #F5F5F5; }
 QMenuBar {
-    background: #1E1E36; color: #B0B0D0; border-bottom: 1px solid #36365A;
+    background: #FFFFFF; color: #1F2937; border-bottom: 1px solid #E5E7EB;
     padding: 2px 0; font-size: 13px;
 }
 QMenuBar::item { padding: 6px 12px; border-radius: 4px; }
-QMenuBar::item:selected { background: #36365A; color: #E8A87C; }
+QMenuBar::item:selected { background: #EFF6FF; color: #2563EB; }
 QMenu {
-    background: #252542; color: #C8C8E0; border: 1px solid #36365A;
+    background: #FFFFFF; color: #1F2937; border: 1px solid #E5E7EB;
     border-radius: 6px; padding: 4px;
 }
 QMenu::item { padding: 8px 24px; border-radius: 4px; }
-QMenu::item:selected { background: #E8A87C; color: #1A1A2E; }
-QMenu::separator { height: 1px; background: #36365A; margin: 4px 8px; }
+QMenu::item:selected { background: #EFF6FF; color: #2563EB; }
+QMenu::separator { height: 1px; background: #E5E7EB; margin: 4px 8px; }
 QStatusBar {
-    background: #1E1E36; color: #8888A8; font-size: 11px;
-    border-top: 1px solid #36365A; padding: 2px 8px;
+    background: #FFFFFF; color: #6B7280; font-size: 11px;
+    border-top: 1px solid #E5E7EB; padding: 2px 8px;
 }
 QStatusBar::item { border: none; }
-QSplitter::handle { background: #36365A; width: 1px; }
+QSplitter::handle { background: #E5E7EB; width: 2px; }
 QDockWidget {
-    color: #C8C8E0; titlebar-close-icon: none;
+    color: #1F2937; titlebar-close-icon: none;
     font-size: 12px; border: none;
 }
 QDockWidget::title {
-    background: #1E1E36; padding: 8px; text-align: center;
-    border-bottom: 1px solid #36365A;
+    background: #FFFFFF; padding: 8px; text-align: center;
+    border-bottom: 1px solid #E5E7EB; font-weight: bold; color: #2563EB;
 }
 """
 
@@ -170,11 +170,11 @@ class MainWindow(QMainWindow):
         mb = self.menuBar()
 
         fm = mb.addMenu("Tập tin")
-        a = QAction("📂 Mở tập tin...", self)
+        a = QAction("Mở tập tin...", self)
         a.setShortcut(QKeySequence("Ctrl+O"))
         a.triggered.connect(self._on_open_file)
         fm.addAction(a)
-        a = QAction("📥 Xuất audio...", self)
+        a = QAction("Xuất audio...", self)
         a.setShortcut(QKeySequence("Ctrl+E"))
         a.triggered.connect(self._on_export_audio)
         fm.addAction(a)
@@ -195,11 +195,11 @@ class MainWindow(QMainWindow):
         nm.addAction(a)
 
         bm = mb.addMenu("Bookmark")
-        a = QAction("➕ Thêm bookmark", self)
+        a = QAction("Thêm bookmark", self)
         a.setShortcut(QKeySequence("Ctrl+B"))
         a.triggered.connect(self._on_add_bookmark)
         bm.addAction(a)
-        a = QAction("📋 Danh sách", self)
+        a = QAction("Danh sách", self)
         a.setShortcut(QKeySequence("Ctrl+L"))
         a.triggered.connect(self._on_list_bookmarks)
         bm.addAction(a)
@@ -249,7 +249,7 @@ class MainWindow(QMainWindow):
         self._show_chapter(0, 0)
         self.setWindowTitle(f"Truyện TTS - {os.path.basename(path)}")
         self.status_label.setText(
-            f"📖 {len(self.chapters)} chương · {len(self.all_sentences_flat)} câu"
+            f"{len(self.chapters)} chương · {len(self.all_sentences_flat)} câu"
         )
 
     def _show_chapter(self, chapter_index, sentence_index=0):
@@ -367,13 +367,13 @@ class MainWindow(QMainWindow):
     def _on_all_done(self):
         self.controls_bar.set_playing(False)
         self._play_state = 'stopped'
-        self.status_label.setText("✅ Đã đọc xong!")
+        self.status_label.setText("Da doc xong!")
 
     def _on_status_message(self, msg):
         self.status_label.setText(msg)
 
     def _on_error(self, msg):
-        self.status_label.setText(f"❌ {msg}")
+        self.status_label.setText(f"Loi: {msg}")
 
     def _global_to_local(self, global_idx):
         for ch in range(len(self.chapter_sentence_offsets) - 1, -1, -1):
@@ -390,7 +390,7 @@ class MainWindow(QMainWindow):
         preview = sents[self.current_sentence] if self.current_sentence < len(sents) else ""
         add_bookmark(self.current_file, self.current_chapter,
                      self.current_sentence, title, preview)
-        self.status_label.setText("✅ Đã thêm bookmark")
+        self.status_label.setText("Da them bookmark")
 
     def _on_list_bookmarks(self):
         bookmarks = load_bookmarks()
@@ -439,7 +439,7 @@ class MainWindow(QMainWindow):
                 safe = "".join(c for c in title if c.isalnum() or c in ' _-')[:40]
                 sf.write(os.path.join(dir_path, f"chuong_{ch_idx+1}_{safe}.wav"),
                          combined, 24000)
-        self._on_status_message(f"✅ Đã xuất {len(self.chapters)} file WAV")
+        self._on_status_message(f"Da xuat {len(self.chapters)} file WAV")
 
     def _restore_session(self):
         try:

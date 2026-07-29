@@ -15,51 +15,32 @@ class ControlsBar(QWidget):
     speed_changed = pyqtSignal(float)
     volume_changed = pyqtSignal(float)
 
-    BTN = """
-        QPushButton {
-            background: transparent; color: #A8A8C8; border: none;
-            border-radius: 6px; font-size: 16px; padding: 6px 10px;
-            min-width: 32px; min-height: 32px;
-        }
-        QPushButton:hover { background: #36365A; color: #E8A87C; }
-        QPushButton:pressed { background: #48486A; }
-    """
-    BTN_PRIMARY = """
-        QPushButton {
-            background: #E8A87C; color: #1A1A2E; border: none;
-            border-radius: 8px; font-size: 18px; padding: 6px 16px;
-            min-width: 44px; min-height: 36px;
-        }
-        QPushButton:hover { background: #F0B88C; }
-        QPushButton:pressed { background: #D8986C; }
-    """
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self._is_playing = False
         self._setup_ui()
 
     def _setup_ui(self):
-        self.setStyleSheet(f"""
-            ControlsBar {{
-                background: #1E1E36; border-top: 1px solid #36365A;
-            }}
-            QLabel {{ color: #8888A8; font-size: 11px; }}
-            QProgressBar {{
-                background: #36365A; border: none; border-radius: 2px;
-                height: 3px; text-align: center;
-            }}
-            QProgressBar::chunk {{ background: #E8A87C; border-radius: 2px; }}
-            QSlider::groove:horizontal {{
-                height: 3px; background: #36365A; border-radius: 1px;
-            }}
-            QSlider::handle:horizontal {{
-                background: #E8A87C; width: 12px; height: 12px;
-                margin: -5px 0; border-radius: 6px;
-            }}
-            QSlider::sub-page:horizontal {{
-                background: #E8A87C; border-radius: 1px;
-            }}
+        self.setStyleSheet("""
+            ControlsBar {
+                background: #FFFFFF; border-top: 1px solid #E5E7EB;
+            }
+            QLabel { color: #6B7280; font-size: 11px; }
+            QProgressBar {
+                background: #E5E7EB; border: none; border-radius: 2px;
+                height: 4px; text-align: center;
+            }
+            QProgressBar::chunk { background: #2563EB; border-radius: 2px; }
+            QSlider::groove:horizontal {
+                height: 4px; background: #E5E7EB; border-radius: 2px;
+            }
+            QSlider::handle:horizontal {
+                background: #2563EB; width: 14px; height: 14px;
+                margin: -5px 0; border-radius: 7px;
+            }
+            QSlider::sub-page:horizontal {
+                background: #2563EB; border-radius: 2px;
+            }
         """)
 
         outer = QVBoxLayout(self)
@@ -69,33 +50,50 @@ class ControlsBar(QWidget):
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
-        self.progress.setFixedHeight(3)
+        self.progress.setFixedHeight(4)
         self.progress.setTextVisible(False)
         outer.addWidget(self.progress)
 
         row = QHBoxLayout()
         row.setContentsMargins(12, 6, 12, 8)
-        row.setSpacing(4)
+        row.setSpacing(2)
+
+        btn_style = """
+            QPushButton {
+                background: transparent; color: #4B5563; border: none;
+                border-radius: 6px; font-size: 18px; padding: 6px 10px;
+                min-width: 36px; min-height: 36px;
+            }
+            QPushButton:hover { background: #F3F4F6; color: #2563EB; }
+            QPushButton:pressed { background: #E5E7EB; }
+        """
+        play_style = """
+            QPushButton {
+                background: #2563EB; color: #FFFFFF; border: none;
+                border-radius: 8px; font-size: 20px; padding: 6px 16px;
+                min-width: 48px; min-height: 36px;
+            }
+            QPushButton:hover { background: #3B82F6; }
+            QPushButton:pressed { background: #1D4ED8; }
+        """
 
         self.btn_prev_chapter = QPushButton("⏮")
         self.btn_prev_chapter.setToolTip("Chương trước")
-        self.btn_prev_sentence = QPushButton("◀")
+        self.btn_prev_sentence = QPushButton("⏪")
         self.btn_prev_sentence.setToolTip("Câu trước")
         self.btn_play_pause = QPushButton("▶")
         self.btn_play_pause.setToolTip("Phát / Tạm dừng")
         self.btn_stop = QPushButton("⏹")
         self.btn_stop.setToolTip("Dừng")
-        self.btn_next_sentence = QPushButton("▶")
+        self.btn_next_sentence = QPushButton("⏩")
         self.btn_next_sentence.setToolTip("Câu sau")
         self.btn_next_chapter = QPushButton("⏭")
         self.btn_next_chapter.setToolTip("Chương sau")
-        self.btn_next_sentence.setStyleSheet(self.BTN)
-        self.btn_next_chapter.setStyleSheet(self.BTN)
 
-        self.btn_prev_chapter.setStyleSheet(self.BTN)
-        self.btn_prev_sentence.setStyleSheet(self.BTN)
-        self.btn_play_pause.setStyleSheet(self.BTN_PRIMARY)
-        self.btn_stop.setStyleSheet(self.BTN)
+        for b in [self.btn_prev_chapter, self.btn_prev_sentence,
+                  self.btn_stop, self.btn_next_sentence, self.btn_next_chapter]:
+            b.setStyleSheet(btn_style)
+        self.btn_play_pause.setStyleSheet(play_style)
 
         row.addWidget(self.btn_prev_chapter)
         row.addWidget(self.btn_prev_sentence)
@@ -103,7 +101,7 @@ class ControlsBar(QWidget):
         row.addWidget(self.btn_stop)
         row.addWidget(self.btn_next_sentence)
         row.addWidget(self.btn_next_chapter)
-        row.addSpacing(12)
+        row.addSpacing(16)
 
         row.addWidget(QLabel("Tốc độ"))
         self.speed_slider = QSlider(Qt.Orientation.Horizontal)
@@ -128,7 +126,7 @@ class ControlsBar(QWidget):
         row.addSpacing(8)
 
         self.pos_label = QLabel("-- / --")
-        self.pos_label.setStyleSheet("color: #A8A8C8; font-size: 12px; padding: 0 8px;")
+        self.pos_label.setStyleSheet("color: #4B5563; font-size: 12px; padding: 0 8px;")
         row.addWidget(self.pos_label)
 
         row.addStretch()

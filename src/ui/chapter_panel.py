@@ -12,23 +12,25 @@ class ChapterPanel(QWidget):
 
     def _setup_ui(self):
         self.setStyleSheet("""
-            ChapterPanel { background: #1E1E36; border-right: 1px solid #36365A; }
+            ChapterPanel {
+                background: #FFFFFF; border-right: 1px solid #E5E7EB;
+            }
             QLabel#title {
-                color: #A8A8C8; font-size: 11px; font-weight: bold;
+                color: #2563EB; font-size: 11px; font-weight: bold;
                 padding: 12px 12px 4px; text-transform: uppercase;
             }
             QTreeWidget {
-                background: transparent; color: #B0B0D0;
+                background: transparent; color: #4B5563;
                 font-size: 13px; border: none; padding: 4px;
             }
             QTreeWidget::item {
                 padding: 8px 12px; border-radius: 6px; margin: 1px 4px;
             }
             QTreeWidget::item:selected {
-                background: #E8A87C; color: #1A1A2E;
+                background: #EFF6FF; color: #2563EB; font-weight: bold;
             }
             QTreeWidget::item:hover {
-                background: #36365A; color: #E0E0F0;
+                background: #F9FAFB; color: #2563EB;
             }
         """)
 

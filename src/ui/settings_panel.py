@@ -17,54 +17,54 @@ class SettingsPanel(QWidget):
 
     def _setup_ui(self):
         self.setStyleSheet("""
-            QWidget { background-color: #252542; color: #C8C8E0; }
+            QWidget { background-color: #FFFFFF; color: #1F2937; }
             QGroupBox {
-                font-size: 12px; font-weight: bold; color: #A8A8C8;
-                border: 1px solid #36365A; border-radius: 6px;
+                font-size: 12px; font-weight: bold; color: #4B5563;
+                border: 1px solid #E5E7EB; border-radius: 6px;
                 margin-top: 12px; padding: 12px 8px 8px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin; subcontrol-position: top left;
-                padding: 0 8px; color: #E8A87C;
+                padding: 0 8px; color: #2563EB;
             }
             QComboBox {
-                background-color: #36365A; color: #E0E0F0;
-                border: 1px solid #48486A; border-radius: 4px;
+                background-color: #FFFFFF; color: #1F2937;
+                border: 1px solid #D1D5DB; border-radius: 4px;
                 padding: 4px 8px; font-size: 12px;
                 min-height: 24px;
             }
-            QComboBox:hover { border-color: #E8A87C; }
+            QComboBox:hover { border-color: #2563EB; }
             QComboBox::drop-down { border: none; width: 20px; }
             QComboBox QAbstractItemView {
-                background-color: #36365A; color: #E0E0F0;
-                selection-background-color: #E8A87C;
-                selection-color: #1A1A2E;
-                border: 1px solid #48486A;
+                background-color: #FFFFFF; color: #1F2937;
+                selection-background-color: #EFF6FF;
+                selection-color: #2563EB;
+                border: 1px solid #D1D5DB;
             }
-            QLabel { font-size: 12px; color: #A8A8C8; }
+            QLabel { font-size: 12px; color: #4B5563; }
             QSlider::groove:horizontal {
-                height: 3px; background: #36365A; border-radius: 1px;
+                height: 4px; background: #E5E7EB; border-radius: 2px;
             }
             QSlider::handle:horizontal {
-                background: #E8A87C; width: 12px; height: 12px;
-                margin: -5px 0; border-radius: 6px;
+                background: #2563EB; width: 14px; height: 14px;
+                margin: -5px 0; border-radius: 7px;
             }
             QSlider::sub-page:horizontal {
-                background: #E8A87C; border-radius: 1px;
+                background: #2563EB; border-radius: 2px;
             }
             QCheckBox {
-                color: #C8C8E0; font-size: 12px; spacing: 6px;
+                color: #1F2937; font-size: 12px; spacing: 6px;
             }
             QCheckBox::indicator {
                 width: 14px; height: 14px; border-radius: 3px;
-                border: 1px solid #48486A; background: #36365A;
+                border: 1px solid #D1D5DB; background: #FFFFFF;
             }
             QCheckBox::indicator:checked {
-                background: #E8A87C; border-color: #E8A87C;
+                background: #2563EB; border-color: #2563EB;
             }
             QSpinBox {
-                background-color: #36365A; color: #E0E0F0;
-                border: 1px solid #48486A; border-radius: 4px;
+                background-color: #FFFFFF; color: #1F2937;
+                border: 1px solid #D1D5DB; border-radius: 4px;
                 padding: 2px 4px; font-size: 12px;
                 min-height: 22px;
             }
@@ -81,8 +81,8 @@ class SettingsPanel(QWidget):
         layout.setContentsMargins(8, 4, 8, 4)
         layout.setSpacing(4)
 
-        title = QLabel("⚙ Cài đặt")
-        title.setStyleSheet("font-size: 14px; font-weight: bold; color: #E0E0F0; padding: 4px 0;")
+        title = QLabel("Cài đặt")
+        title.setStyleSheet("font-size: 14px; font-weight: bold; color: #2563EB; padding: 4px 0;")
         layout.addWidget(title)
 
         self._build_voice_section(layout)

@@ -10,6 +10,12 @@ class ReaderView(QTextBrowser):
         super().__init__(parent)
         self.setReadOnly(True)
         self.setOpenExternalLinks(False)
+        self.setStyleSheet("""
+            QTextBrowser {
+                background: #FFFFFF; border: none; padding: 24px 32px;
+                selection-background-color: #FEF08A;
+            }
+        """)
         self.sentences = []
         self.chapter_title = ""
         self._active_index = -1
@@ -42,20 +48,24 @@ class ReaderView(QTextBrowser):
         self.clear()
 
     def _render(self):
-        parts = ['<html><body style="font-family:Georgia,serif;font-size:17px;line-height:1.9;color:#2D2424;">']
+        parts = [
+            '<html><body style="'
+            'font-family:Georgia,serif;font-size:18px;line-height:2;'
+            'color:#1F2937;background:#FFFFFF;max-width:720px;margin:0 auto;'
+            '">'
+        ]
         if self.chapter_title:
             parts.append(
-                f'<h2 style="color:#8B6914;text-align:center;font-weight:normal;'
-                f'font-size:22px;margin-bottom:20px;border-bottom:1px solid #E8D5B5;'
+                f'<h2 style="color:#2563EB;text-align:center;font-weight:600;'
+                f'font-size:24px;margin-bottom:24px;border-bottom:1px solid #E5E7EB;'
                 f'padding-bottom:12px;">{html_mod.escape(self.chapter_title)}</h2>'
             )
         for i, sent in enumerate(self.sentences):
             escaped = html_mod.escape(sent)
             if i == self._active_index:
                 parts.append(
-                    f'<span id="s{i}" style="background-color:#FFE082;'
-                    f'padding:2px 6px;border-radius:4px;'
-                    f'transition:background-color 0.3s;">{escaped}</span> '
+                    f'<span id="s{i}" style="background-color:#FEF08A;'
+                    f'padding:2px 6px;border-radius:4px;">{escaped}</span> '
                 )
             else:
                 parts.append(
