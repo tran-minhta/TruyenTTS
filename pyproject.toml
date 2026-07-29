@@ -1,0 +1,21 @@
+[project]
+name = "truyen-tts"
+version = "0.1.0"
+description = "Ứng dụng đọc truyện với giọng đọc tiếng Việt (TTS)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "vieneu",
+    "ebooklib",
+    "beautifulsoup4",
+    "lxml",
+    "PyQt6",
+    "PyAudio",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
