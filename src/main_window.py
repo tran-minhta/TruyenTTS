@@ -2,8 +2,8 @@ import os
 import threading
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
-    QSplitter, QFileDialog, QMessageBox, QMenuBar, QMenu,
-    QStatusBar, QLabel, QApplication,
+    QSplitter, QDockWidget, QFileDialog, QMessageBox,
+    QMenuBar, QMenu, QStatusBar, QLabel,
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QAction, QKeySequence
@@ -11,30 +11,56 @@ from PyQt6.QtGui import QAction, QKeySequence
 from src.ui.reader_view import ReaderView
 from src.ui.controls_bar import ControlsBar
 from src.ui.chapter_panel import ChapterPanel
+from src.ui.settings_panel import SettingsPanel
 from src.tts.vieneu_engine import VieNeuEngine
 from src.tts.audio_player import AudioPlayer
 from src.tts.manager import TTSManager
 from src.reader.text_loader import load_file
 from src.reader.text_splitter import split_sentences
 from src.reader.bookmark_manager import (
-    load_bookmarks, save_bookmarks, add_bookmark,
+    load_bookmarks, add_bookmark,
     load_config, save_config,
 )
+
+
+APP_CSS = """
+QMainWindow { background-color: #1A1A2E; }
+QMenuBar {
+    background: #1E1E36; color: #B0B0D0; border-bottom: 1px solid #36365A;
+    padding: 2px 0; font-size: 13px;
+}
+QMenuBar::item { padding: 6px 12px; border-radius: 4px; }
+QMenuBar::item:selected { background: #36365A; color: #E8A87C; }
+QMenu {
+    background: #252542; color: #C8C8E0; border: 1px solid #36365A;
+    border-radius: 6px; padding: 4px;
+}
+QMenu::item { padding: 8px 24px; border-radius: 4px; }
+QMenu::item:selected { background: #E8A87C; color: #1A1A2E; }
+QMenu::separator { height: 1px; background: #36365A; margin: 4px 8px; }
+QStatusBar {
+    background: #1E1E36; color: #8888A8; font-size: 11px;
+    border-top: 1px solid #36365A; padding: 2px 8px;
+}
+QStatusBar::item { border: none; }
+QSplitter::handle { background: #36365A; width: 1px; }
+QDockWidget {
+    color: #C8C8E0; titlebar-close-icon: none;
+    font-size: 12px; border: none;
+}
+QDockWidget::title {
+    background: #1E1E36; padding: 8px; text-align: center;
+    border-bottom: 1px solid #36365A;
+}
+"""
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Truyện TTS - Đọc truyện bằng giọng nói")
-        self.setMinimumSize(1000, 700)
-        self.setStyleSheet("""
-            QMainWindow { background-color: #1A1A1A; }
-            QMenuBar { background-color: #2C2C2C; color: #DDD; padding: 2px; }
-            QMenuBar::item:selected { background-color: #FFB300; color: #1A1A1A; }
-            QMenu { background-color: #2C2C2C; color: #DDD; border: 1px solid #444; }
-            QMenu::item:selected { background-color: #FFB300; color: #1A1A1A; }
-            QStatusBar { background-color: #2C2C2C; color: #999; font-size: 12px; }
-        """)
+        self.setWindowTitle("Truyện TTS")
+        self.setMinimumSize(1100, 750)
+        self.setStyleSheet(APP_CSS)
 
         self.current_file = None
         self.chapters = []
@@ -74,7 +100,9 @@ class MainWindow(QMainWindow):
 
     def _load_engine(self):
         try:
-            self.engine.initialize(status_callback=lambda msg: self.status_label.setText(msg))
+            self.engine.initialize(
+                status_callback=lambda msg: self.status_label.setText(msg)
+            )
             self.engine_loaded = True
         except Exception as e:
             self._on_error(f"Không thể tải model TTS: {e}")
@@ -83,6 +111,11 @@ class MainWindow(QMainWindow):
         if self.engine_loaded:
             self._loading_timer.stop()
             self.status_label.setText("Sẵn sàng")
+            self._populate_settings()
+
+    def _populate_settings(self):
+        voices = self.engine.get_voices()
+        self.settings_panel.populate_voices(voices)
 
     def _init_ui(self):
         central = QWidget()
@@ -92,6 +125,7 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setHandleWidth(1)
 
         self.chapter_panel = ChapterPanel()
         self.chapter_panel.setFixedWidth(220)
@@ -116,63 +150,70 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(splitter)
         main_layout.addWidget(self.controls_bar)
 
+        self.settings_panel = SettingsPanel()
+        self.settings_panel.voice_changed.connect(self._on_voice_changed)
+        self.settings_panel.style_changed.connect(self._on_style_changed)
+        self.settings_panel.param_changed.connect(self._on_param_changed)
+
+        dock = QDockWidget("Cài đặt", self)
+        dock.setWidget(self.settings_panel)
+        dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        dock.setFixedWidth(240)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
+
         self._setup_menu()
 
         self.status_label = QLabel("Sẵn sàng")
         self.statusBar().addWidget(self.status_label, 1)
 
     def _setup_menu(self):
-        menubar = self.menuBar()
+        mb = self.menuBar()
 
-        file_menu = menubar.addMenu("Tập tin")
-        open_action = QAction("Mở tập tin...", self)
-        open_action.setShortcut(QKeySequence("Ctrl+O"))
-        open_action.triggered.connect(self._on_open_file)
-        file_menu.addAction(open_action)
+        fm = mb.addMenu("Tập tin")
+        a = QAction("📂 Mở tập tin...", self)
+        a.setShortcut(QKeySequence("Ctrl+O"))
+        a.triggered.connect(self._on_open_file)
+        fm.addAction(a)
+        a = QAction("📥 Xuất audio...", self)
+        a.setShortcut(QKeySequence("Ctrl+E"))
+        a.triggered.connect(self._on_export_audio)
+        fm.addAction(a)
+        fm.addSeparator()
+        a = QAction("Thoát", self)
+        a.setShortcut(QKeySequence("Ctrl+Q"))
+        a.triggered.connect(self.close)
+        fm.addAction(a)
 
-        export_action = QAction("Xuất audio...", self)
-        export_action.setShortcut(QKeySequence("Ctrl+E"))
-        export_action.triggered.connect(self._on_export_audio)
-        file_menu.addAction(export_action)
+        nm = mb.addMenu("Điều hướng")
+        a = QAction("Câu sau", self)
+        a.setShortcut(QKeySequence(Qt.Key.Key_Right))
+        a.triggered.connect(self._on_next_sentence)
+        nm.addAction(a)
+        a = QAction("Câu trước", self)
+        a.setShortcut(QKeySequence(Qt.Key.Key_Left))
+        a.triggered.connect(self._on_prev_sentence)
+        nm.addAction(a)
 
-        file_menu.addSeparator()
-        exit_action = QAction("Thoát", self)
-        exit_action.setShortcut(QKeySequence("Ctrl+Q"))
-        exit_action.triggered.connect(self.close)
-        file_menu.addAction(exit_action)
-
-        nav_menu = menubar.addMenu("Điều hướng")
-        next_sent = QAction("Câu sau", self)
-        next_sent.setShortcut(QKeySequence("Right"))
-        next_sent.triggered.connect(self._on_next_sentence)
-        nav_menu.addAction(next_sent)
-
-        prev_sent = QAction("Câu trước", self)
-        prev_sent.setShortcut(QKeySequence("Left"))
-        prev_sent.triggered.connect(self._on_prev_sentence)
-        nav_menu.addAction(prev_sent)
-
-        bookmark_menu = menubar.addMenu("Bookmark")
-        add_bm = QAction("Thêm bookmark", self)
-        add_bm.setShortcut(QKeySequence("Ctrl+B"))
-        add_bm.triggered.connect(self._on_add_bookmark)
-        bookmark_menu.addAction(add_bm)
-
-        list_bm = QAction("Danh sách bookmark", self)
-        list_bm.setShortcut(QKeySequence("Ctrl+L"))
-        list_bm.triggered.connect(self._on_list_bookmarks)
-        bookmark_menu.addAction(list_bm)
+        bm = mb.addMenu("Bookmark")
+        a = QAction("➕ Thêm bookmark", self)
+        a.setShortcut(QKeySequence("Ctrl+B"))
+        a.triggered.connect(self._on_add_bookmark)
+        bm.addAction(a)
+        a = QAction("📋 Danh sách", self)
+        a.setShortcut(QKeySequence("Ctrl+L"))
+        a.triggered.connect(self._on_list_bookmarks)
+        bm.addAction(a)
 
     def _setup_shortcuts(self):
-        play_action = QAction("Play/Pause", self)
-        play_action.triggered.connect(self._on_play_pause)
-        play_action.setShortcut(QKeySequence("Space"))
-        self.addAction(play_action)
+        a = QAction("Play/Pause", self)
+        a.triggered.connect(self._on_play_pause)
+        a.setShortcut(QKeySequence(Qt.Key.Key_Space))
+        self.addAction(a)
 
     def _on_open_file(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Mở tập tin truyện", "",
-            "Tập tin hỗ trợ (*.txt *.epub);;Text (*.txt);;EPUB (*.epub);;Tất cả (*)"
+            "Hỗ trợ (*.txt *.epub);;Text (*.txt);;EPUB (*.epub);;Tất cả (*)"
         )
         if not path:
             return
@@ -207,7 +248,9 @@ class MainWindow(QMainWindow):
         self.current_sentence = 0
         self._show_chapter(0, 0)
         self.setWindowTitle(f"Truyện TTS - {os.path.basename(path)}")
-        self.status_label.setText(f"Đã tải: {len(self.chapters)} chương, {len(self.all_sentences_flat)} câu")
+        self.status_label.setText(
+            f"📖 {len(self.chapters)} chương · {len(self.all_sentences_flat)} câu"
+        )
 
     def _show_chapter(self, chapter_index, sentence_index=0):
         if not self.chapters:
@@ -225,6 +268,7 @@ class MainWindow(QMainWindow):
     def _on_chapter_selected(self, index):
         self.tts_manager.stop()
         self.controls_bar.set_playing(False)
+        self._play_state = 'stopped'
         self._show_chapter(index, 0)
 
     def _on_sentence_clicked(self, index):
@@ -235,7 +279,7 @@ class MainWindow(QMainWindow):
         if not self.all_sentences_flat:
             return
         if not self.engine_loaded:
-            self.status_label.setText("Model TTS chưa sẵn sàng, vui lòng chờ...")
+            self.status_label.setText("Đợi model TTS tải xong...")
             return
         if self._play_state == 'playing':
             self.tts_manager.pause()
@@ -246,8 +290,8 @@ class MainWindow(QMainWindow):
             self.controls_bar.set_playing(True)
             self._play_state = 'playing'
         else:
-            global_idx = self.chapter_sentence_offsets[self.current_chapter] + self.current_sentence
-            self.tts_manager.start(self.all_sentences_flat, global_idx)
+            g = self.chapter_sentence_offsets[self.current_chapter] + self.current_sentence
+            self.tts_manager.start(self.all_sentences_flat, g)
             self.controls_bar.set_playing(True)
             self._play_state = 'playing'
 
@@ -262,18 +306,19 @@ class MainWindow(QMainWindow):
             return
         self.tts_manager.stop()
         self.controls_bar.set_playing(False)
+        self._play_state = 'stopped'
         if self.current_sentence > 0:
             self._show_chapter(self.current_chapter, self.current_sentence - 1)
         elif self.current_chapter > 0:
-            prev_ch = self.current_chapter - 1
-            prev_sents = self.chapters[prev_ch][1]
-            self._show_chapter(prev_ch, len(prev_sents) - 1)
+            prev = self.chapters[self.current_chapter - 1][1]
+            self._show_chapter(self.current_chapter - 1, len(prev) - 1)
 
     def _on_next_sentence(self):
         if not self.chapters:
             return
         self.tts_manager.stop()
         self.controls_bar.set_playing(False)
+        self._play_state = 'stopped'
         title, sents = self.chapters[self.current_chapter]
         if self.current_sentence < len(sents) - 1:
             self._show_chapter(self.current_chapter, self.current_sentence + 1)
@@ -284,13 +329,27 @@ class MainWindow(QMainWindow):
         if self.current_chapter > 0:
             self.tts_manager.stop()
             self.controls_bar.set_playing(False)
+            self._play_state = 'stopped'
             self._show_chapter(self.current_chapter - 1, 0)
 
     def _on_next_chapter(self):
         if self.current_chapter < len(self.chapters) - 1:
             self.tts_manager.stop()
             self.controls_bar.set_playing(False)
+            self._play_state = 'stopped'
             self._show_chapter(self.current_chapter + 1, 0)
+
+    def _on_voice_changed(self, voice_id):
+        self.engine.set_voice(voice_id)
+        self.status_label.setText(f"Giọng: {voice_id}")
+
+    def _on_style_changed(self, style):
+        self.engine.set_style(style)
+        style_names = {'tu_nhien': 'tự nhiên', 'tin_tuc': 'tin tức', 'ke_chuyen': 'kể chuyện'}
+        self.status_label.setText(f"Phong cách: {style_names.get(style, style)}")
+
+    def _on_param_changed(self, key, value):
+        self.engine.set_parameter(key, value)
 
     def _on_sentence_started(self, global_idx):
         ch, sent = self._global_to_local(global_idx)
@@ -319,9 +378,9 @@ class MainWindow(QMainWindow):
     def _global_to_local(self, global_idx):
         for ch in range(len(self.chapter_sentence_offsets) - 1, -1, -1):
             if global_idx >= self.chapter_sentence_offsets[ch]:
-                sent_idx = global_idx - self.chapter_sentence_offsets[ch]
-                if ch < len(self.chapters) and sent_idx < len(self.chapters[ch][1]):
-                    return ch, sent_idx
+                s = global_idx - self.chapter_sentence_offsets[ch]
+                if ch < len(self.chapters) and s < len(self.chapters[ch][1]):
+                    return ch, s
         return 0, 0
 
     def _on_add_bookmark(self):
@@ -329,13 +388,8 @@ class MainWindow(QMainWindow):
             return
         title, sents = self.chapters[self.current_chapter]
         preview = sents[self.current_sentence] if self.current_sentence < len(sents) else ""
-        add_bookmark(
-            self.current_file,
-            self.current_chapter,
-            self.current_sentence,
-            title,
-            preview,
-        )
+        add_bookmark(self.current_file, self.current_chapter,
+                     self.current_sentence, title, preview)
         self.status_label.setText("✅ Đã thêm bookmark")
 
     def _on_list_bookmarks(self):
@@ -343,74 +397,62 @@ class MainWindow(QMainWindow):
         if not bookmarks:
             QMessageBox.information(self, "Bookmark", "Chưa có bookmark nào.")
             return
-        lines = []
-        for i, bm in enumerate(bookmarks):
-            fname = os.path.basename(bm.get('file_path', ''))
-            preview = bm.get('text_preview', '')
-            lines.append(f"{i + 1}. [{fname}] {preview}")
-        QMessageBox.information(
-            self, "Danh sách Bookmark",
-            "\n".join(lines) if lines else "Chưa có bookmark."
-        )
+        lines = [f"{i+1}. [{os.path.basename(bm.get('file_path',''))}] {bm.get('text_preview','')}"
+                 for i, bm in enumerate(bookmarks)]
+        QMessageBox.information(self, "Bookmark", "\n".join(lines))
 
     def _on_export_audio(self):
         if not self.all_sentences_flat:
-            QMessageBox.warning(self, "Xuất audio", "Chưa có nội dung để xuất.")
+            QMessageBox.warning(self, "Xuất audio", "Chưa có nội dung.")
             return
-        dir_path = QFileDialog.getExistingDirectory(self, "Chọn thư mục xuất audio")
+        dir_path = QFileDialog.getExistingDirectory(self, "Chọn thư mục xuất")
         if not dir_path:
             return
         self.tts_manager.stop()
         self.controls_bar.set_playing(False)
+        self._play_state = 'stopped'
         self.status_label.setText("Đang xuất audio...")
-        thread = threading.Thread(
-            target=self._export_audio_thread,
-            args=(dir_path,),
-            daemon=True,
-        )
-        thread.start()
+        threading.Thread(target=self._export_audio_thread,
+                         args=(dir_path,), daemon=True).start()
 
     def _export_audio_thread(self, dir_path):
         try:
             import soundfile as sf
         except ImportError:
-            self._on_error("Cần cài soundfile: pip install soundfile")
+            self._on_error("Cần: pip install soundfile")
             return
-
         for ch_idx, (title, sents) in enumerate(self.chapters):
-            audio_chunks = []
+            chunks = []
             for i, sent in enumerate(sents):
                 try:
                     audio, sr = self.engine.generate(sent)
-                    audio_chunks.append(audio)
+                    chunks.append(audio)
                 except Exception as e:
-                    self._on_error(f"Lỗi câu {i} chương {ch_idx}: {e}")
+                    self._on_error(f"Lỗi câu {i} ch.{ch_idx}: {e}")
                     continue
                 if i % 10 == 0:
-                    self._on_status_message(f"Xuất chương {ch_idx + 1}/{len(self.chapters)}: câu {i}/{len(sents)}")
-            if audio_chunks:
+                    self._on_status_message(
+                        f"Xuất ch.{ch_idx+1}/{len(self.chapters)}: {i}/{len(sents)}")
+            if chunks:
                 import numpy as np
-                combined = np.concatenate(audio_chunks)
-                safe_title = "".join(c for c in title if c.isalnum() or c in ' _-')[:40]
-                out_path = os.path.join(dir_path, f"chuong_{ch_idx + 1}_{safe_title}.wav")
-                sf.write(out_path, combined, 24000)
-
-        self._on_status_message(f"✅ Đã xuất {len(self.chapters)} file audio vào {dir_path}")
+                combined = np.concatenate(chunks)
+                safe = "".join(c for c in title if c.isalnum() or c in ' _-')[:40]
+                sf.write(os.path.join(dir_path, f"chuong_{ch_idx+1}_{safe}.wav"),
+                         combined, 24000)
+        self._on_status_message(f"✅ Đã xuất {len(self.chapters)} file WAV")
 
     def _restore_session(self):
         try:
-            config = load_config()
-            last_file = config.get('last_file')
-            if last_file and os.path.exists(last_file):
-                self._load_file(last_file)
+            cfg = load_config()
+            last = cfg.get('last_file')
+            if last and os.path.exists(last):
+                self._load_file(last)
         except Exception:
             pass
 
     def _save_session(self):
         if self.current_file:
-            save_config({
-                'last_file': self.current_file,
-            })
+            save_config({'last_file': self.current_file})
 
     def closeEvent(self, event):
         self._save_session()

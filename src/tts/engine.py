@@ -16,5 +16,21 @@ class TTSEngine(ABC):
         pass
 
     @abstractmethod
+    def get_voice(self) -> str | None:
+        pass
+
+    @abstractmethod
+    def get_styles(self) -> list[str]:
+        pass
+
+    @abstractmethod
+    def set_style(self, style: str):
+        pass
+
+    @abstractmethod
+    def set_parameter(self, key: str, value):
+        pass
+
+    @abstractmethod
     def close(self):
         pass
